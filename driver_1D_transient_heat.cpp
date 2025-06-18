@@ -135,9 +135,18 @@ int main(int argc,char **args)
     hsolver->initialize(temp, F);
 
     std::vector<double> init_data = vec2arry->get_vector_array(temp);
-    h5_tls->setup_hdf5();
+    if (rank == 0){
+        std::cout << "init_data: \n";
+        for (int ii = 0; ii < N; ++ii){
+            std::cout << init_data[ii] << "\t";
+        }
+        std::cout << std::endl;
+    }
 
-    hsolver->time_loop(temp, F, A);
+    h5_tls->setup_hdf5();
+    h5_tls->write_hdf5(0, init_data, 0.0);
+
+    hsolver->time_loop(temp, F, A, h5_tls, vec2arry);
 
     // // Set exact solution;
     // PetscScalar *u_array;

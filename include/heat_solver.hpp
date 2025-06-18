@@ -3,7 +3,8 @@
 
 #include <petsc.h>
 #include "Manufactured_Solution.hpp"
-
+#include "hdf5_tools.hpp"
+#include "Vec2Array.hpp"
 
 class heat_solver
 {
@@ -27,7 +28,7 @@ public:
     void update_sourcevec(Vec &F, int j);
 
     // loop time step
-    void time_loop(Vec &temp, Vec &F, Mat &A);
+    void time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
 
 
 };

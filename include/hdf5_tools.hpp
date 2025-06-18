@@ -23,7 +23,7 @@ public:
     void setup_hdf5();
 
     // write hdf5
-    void write_hdf5();
+    void write_hdf5( const int &time_index, std::vector<double>& data, double time_value );
 
 
 };

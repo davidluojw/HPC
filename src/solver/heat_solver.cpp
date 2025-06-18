@@ -1,5 +1,7 @@
 // heat_solver.cpp
 #include "heat_solver.hpp"
+#include "hdf5_tools.hpp"
+#include "Vec2Array.hpp"
 #include <petsc.h>
 
 heat_solver::heat_solver(Manufactured_Solution *mn_sol_in)
@@ -103,12 +105,31 @@ void heat_solver::update_sourcevec(Vec &F, int j){
     VecAssemblyEnd(F);
 }
 
-void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A) {
+void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry) {
+    PetscInt rstart, rend;
+    PetscMPIInt    rank,size;
+    VecGetOwnershipRange(F, &rstart, &rend);
+    MPI_Comm_size(PETSC_COMM_WORLD,&size);
+    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
+
     for (int j = 1; j <= 2; j++) {
         update_temperature_expliciteuler(temp, F, A);
         update_sourcevec(F, j);
 
         VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
         VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+
+        std::vector<double> step_data = vec2arry->get_vector_array(temp);
+        if (rank == 0){
+            std::cout << "step_data: time_step = " << j << "\n";
+            for (int ii = 0; ii < mn_sol->N; ++ii){
+                std::cout << step_data[ii] << "\t";
+            }
+            std::cout << std::endl;
+        }
+
+        h5_tls->write_hdf5(j, step_data, j * mn_sol->dt);
+
     }
+
 }
