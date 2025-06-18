@@ -4,6 +4,8 @@ static char help[] = "Solves a 1D transient heat problem.\n\n";
 #include <vector>
 #include "heat_solver.hpp"
 #include <petsc.h>
+#include "hdf5_tools.hpp"
+#include "Vec2Array.hpp"
 
 int main(int argc,char **args)
 {
@@ -126,7 +128,14 @@ int main(int argc,char **args)
 
     heat_solver * hsolver = new heat_solver(mn_sol);
 
+    hdf5_tools *h5_tls = new hdf5_tools("SOL_TEMPERATURE.h5");
+
+    Vec2Array *vec2arry = new Vec2Array(); 
+
     hsolver->initialize(temp, F);
+
+    std::vector<double> init_data = vec2arry->get_vector_array(temp);
+    h5_tls->setup_hdf5();
 
     hsolver->time_loop(temp, F, A);
 
