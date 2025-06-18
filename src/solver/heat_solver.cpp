@@ -13,7 +13,7 @@ void heat_solver::initialize(Vec &temp, Vec &F) {
     MPI_Comm_size(PETSC_COMM_WORLD,&size);
     MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
 
-    double t0 = 0.0;
+    double t0 = mn_sol->initial_time;
 
     // set temp = u(x,0)
     for (PetscInt i = rstart; i < rend; i++) {
@@ -48,46 +48,67 @@ void heat_solver::initialize(Vec &temp, Vec &F) {
     VecAssemblyBegin(F);
     VecAssemblyEnd(F);
 
-    
+    VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
+    VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+
 }
 
-// void HeatSolver::timeStepLoop() {
-//     int steps = T_ / dt_;
-//     for (int step = 0; step <= steps; ++step) {
-//         stepExplicit();
-//         VecCopy(u_new_, u_);
-//     }
-// }
+void heat_solver::update_temperature_expliciteuler(Vec &temp, Vec &F, Mat &A){
+    Vec temp_np1;
+    VecDuplicate(temp, &temp_np1);
 
-// void HeatSolver::stepExplicit() {
-//     PetscScalar *u_array, *u_new_array;
-//     PetscInt nlocal;
-//     VecGetLocalSize(u_, &nlocal);
-//     VecGetArray(u_, &u_array);
-//     VecGetArray(u_new_, &u_new_array);
+    // temp_np1 = A*temp
+    MatMult(A, temp, temp_np1);
 
-//     double dx = 1.0 / (nx_ - 1);
-//     double dy = 1.0 / (ny_ - 1);
-//     double coef = dt_ * kappa_ / (rho_ * c_);
+    // temp_np1 = temp_np1 + F
+    VecAXPY(temp_np1, 1.0, F);
 
-//     for (int j = 0; j < ny_; ++j) {
-//         for (int i = 0; i < nx_; ++i) {
-//             int idx = j * nx_ + i;
-//             double uij = u_array[idx];
+    // Update temp
+    VecSwap(temp, temp_np1);
 
-//             // neighbors
-//             double uL = (i > 0)     ? u_array[idx - 1] : 0.0;
-//             double uR = (i < nx_ - 1) ? u_array[idx + 1] : 0.0;
-//             double uD = (j > 0)     ? u_array[idx - nx_] : 0.0;
-//             double uU = (j < ny_ - 1) ? u_array[idx + nx_] : 0.0;
+    // release
+    VecDestroy(&temp_np1);
 
-//             double d2udx2 = (uL - 2*uij + uR) / (dx*dx);
-//             double d2udy2 = (uD - 2*uij + uU) / (dy*dy);
+}
 
-//             u_new_array[idx] = uij + coef * (d2udx2 + d2udy2);
-//         }
-//     }
+void heat_solver::update_sourcevec(Vec &F, int j){
+    PetscInt rstart, rend;
+    PetscMPIInt    rank,size;
+    VecGetOwnershipRange(F, &rstart, &rend);
+    MPI_Comm_size(PETSC_COMM_WORLD,&size);
+    MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
 
-//     VecRestoreArray(u_, &u_array);
-//     VecRestoreArray(u_new_, &u_new_array);
-// }
+    double tt = j * mn_sol->dt;
+
+    // set F = f(x,0)
+    for (PetscInt i = rstart; i < rend; i++) {        
+        // manufactured solution f at t = 0: f(x,0)
+        double f_val = mn_sol->r2 * mn_sol->f(mn_sol->x_coor[i+1], tt); // internal nodes start from x_coor = dx
+        PetscPrintf(PETSC_COMM_SELF,"from rank %d , rstart = %d, rend = %d, i = %d, f_val = %f\n",rank, rstart, rend, i, f_val);
+        if (i == 0){
+            f_val += mn_sol->r1 * mn_sol->g(mn_sol->x_coor[0], tt);
+            PetscPrintf(PETSC_COMM_SELF,"from rank %d , i = %d, f_val = %f\n",rank, i, f_val);
+        }
+        else if (i == mn_sol->N - 1){
+            f_val += mn_sol->r1 * 2 * mn_sol->dx / mn_sol->kappa * mn_sol->h(mn_sol->x_coor[mn_sol->N], tt, 1);
+            PetscPrintf(PETSC_COMM_SELF,"from rank %d, i = %d, f_val = %f \n",rank, i, f_val);
+        }
+        
+        // set Vec values
+        VecSetValues(F, 1, &i, &f_val, INSERT_VALUES);
+    }
+
+    // Assembly Vec
+    VecAssemblyBegin(F);
+    VecAssemblyEnd(F);
+}
+
+void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A) {
+    for (int j = 1; j <= 2; j++) {
+        update_temperature_expliciteuler(temp, F, A);
+        update_sourcevec(F, j);
+
+        VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
+        VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+    }
+}

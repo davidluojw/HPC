@@ -128,8 +128,7 @@ int main(int argc,char **args)
 
     hsolver->initialize(temp, F);
 
-    VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
-    VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+    hsolver->time_loop(temp, F, A);
 
     // // Set exact solution;
     // PetscScalar *u_array;
