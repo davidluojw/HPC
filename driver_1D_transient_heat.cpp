@@ -2,9 +2,10 @@ static char help[] = "Solves a 1D transient heat problem.\n\n";
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include "heat_solver.hpp"
 #include <petsc.h>
+#include "heat_solver.hpp"
 #include "hdf5_tools.hpp"
+#include "vtk_tools.hpp"
 #include "Vec2Array.hpp"
 
 int main(int argc,char **args)
@@ -132,9 +133,9 @@ int main(int argc,char **args)
 
     Vec2Array *vec2arry = new Vec2Array(); 
 
-    hsolver->initialize(temp, F);
+    hsolver->initialize(temp, F); // initialize the temperature vector and source vector
 
-    std::vector<double> init_temp = vec2arry->get_vector_array(temp);
+    std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
     if (rank == 0){
         std::cout << "init_temp: \n";
         for (int ii = 0; ii < N; ++ii){
@@ -143,13 +144,13 @@ int main(int argc,char **args)
         std::cout << std::endl;
     }
 
-    h5_tls->setup_hdf5();
-    h5_tls->write_hdf5(0, 0, init_temp);
+    h5_tls->setup_hdf5();                    // create a h5 file
+    h5_tls->write_hdf5(0, 0, init_temp);     // write the array into the h5 file
 
-    hsolver->time_loop(temp, F, A, h5_tls, vec2arry);
+    hsolver->time_loop(temp, F, A, h5_tls, vec2arry);   // loop over the time step, meanwhile write the h5 file for each time step
 
-    std::vector<std::vector<double>> temp_timesets;
-    h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timesets);
+    std::vector<std::vector<double>> temp_timesets;     // store the temperature arrays for all time steps
+    h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timesets);   // read the h5 file that stores the temperature arrays
     if (rank == 0){
         std::cout << "temp_timesets: \n";
         for (int tt = 0; tt <= 2; tt++){
@@ -159,8 +160,25 @@ int main(int argc,char **args)
             }
             std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
+
+    std::vector<std::vector<double>> exact_temp_timeset = mn_sol->get_exact_temp_timeset();  // obtain the exact temperature arrays for all time steps
+    if (rank == 0){
+        std::cout << "exact_temp_timesets: \n";
+        for (int tt = 0; tt <= 2; tt++){
+            std::cout << "time t " << tt << ": \t";
+            for (int ii = 1; ii <= N; ++ii){
+                std::cout << exact_temp_timeset[tt][ii] << "\t";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    vtk_tools *vtk_tls = new vtk_tools();
+
+    vtk_tls->write_vtk(temp_timesets, "SOL_TEMPERATURE.vtu", dx, dt);
+    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE.vtu", dx, dt);
+
 
     // // Set exact solution;
     // PetscScalar *u_array;

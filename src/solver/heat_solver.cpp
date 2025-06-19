@@ -112,7 +112,7 @@ void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_t
     MPI_Comm_size(PETSC_COMM_WORLD,&size);
     MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
 
-    for (int j = 1; j <= 2; j++) {
+    for (int j = 1; j <= mn_sol->M; j++) {
         update_temperature_expliciteuler(temp, F, A);
         update_sourcevec(F, j);
 

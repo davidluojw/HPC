@@ -2,6 +2,9 @@
 #define MANUFACTURED_SOLUTION
 
 #include <petsc.h>
+#include <iostream>
+#include <cmath>
+#include <vector>
 
 class Manufactured_Solution
 {
@@ -45,6 +48,20 @@ public:
         return (t - 2) * (t - 1) * (2 - x) * (3 - x);
     }
 
+    // get exact solution for temperature field
+    std::vector<std::vector<double>> get_exact_temp_timeset(){
+
+        std::vector<std::vector<double>> temp_timeset(M+1, std::vector<double>(N+1, 0.0));
+        double x_val, t_val;
+        for (int tt = 0; tt <= M; tt++){
+            t_val = tt * dt;
+            for (int ii = 0; ii <= N; ii++){
+                x_val = ii*dx;
+                temp_timeset[tt][ii] = u(x_val, t_val);
+            }
+        }
+        return temp_timeset;
+    }
 
 };
 

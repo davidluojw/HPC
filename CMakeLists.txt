@@ -35,9 +35,11 @@ include_directories(./include)
 
 add_library(solver_heat ./src/solver/heat_solver.cpp)
 add_library(post_hdf5 ./src/postprocessing/hdf5_tools.cpp)
+add_library(post_vtk ./src/postprocessing/vtk_tools.cpp)
 add_library(vec2arry ./src/utils/Vec2Array.cpp)
 target_link_libraries(solver_heat ${PETSC_LIB})
 target_link_libraries(post_hdf5 ${PETSC_LIB})
+target_link_libraries(post_vtk ${PETSC_LIB} ${VTK_LIBRARIES})
 target_link_libraries(vec2arry ${PETSC_LIB})
 # set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${VTK_LIBRARIES})
 # set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} ${HDF5_LIBRARIES})
@@ -48,9 +50,10 @@ target_link_libraries(vec2arry ${PETSC_LIB})
 add_executable(driver_heat driver_1D_transient_heat.cpp)
 
 # Link PETSc to the project
-target_link_libraries(driver_heat ${PETSC_LIB} ${HDF5_LIBRARIES} ${VTK_LIBRARIES})
+target_link_libraries(driver_heat ${PETSC_LIB} ${HDF5_LIBRARIES} ${VTK_LIBRARIES}) 
 target_link_libraries(driver_heat solver_heat)
 target_link_libraries(driver_heat post_hdf5)
+target_link_libraries(driver_heat post_vtk)
 target_link_libraries(driver_heat vec2arry)
 # Link Libraries
 
