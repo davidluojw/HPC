@@ -1,6 +1,8 @@
 #ifndef VTK_TOOLS
 #define VTK_TOOLS
 
+#include <vtkImageData.h>
+#include <vtkXMLImageDataWriter.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
 #include <vtkQuad.h>
@@ -30,7 +32,7 @@ public:
     // dx and dt: spatial step size (dx) and time step size (dt)
     void write_vtk(const std::vector<std::vector<double>> &data,
                    const std::string &vtk_name,
-                   double dx, double dt);
+                   double dx, double dt, double zscale);
 
 
 };

@@ -9,7 +9,7 @@ vtk_tools::vtk_tools(){};
 
 void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,
                           const std::string &vtk_name,
-                          double dx, double dt)
+                          double dx, double dt, double zscale)
 {
     PetscMPIInt rank;
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
@@ -29,10 +29,10 @@ void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,
         // vtkImageData: is used to represent regular grid data (such as spatiotemporal fields).
         // SetDimensions(nx, nt, 1): maps spatiotemporal data into a two-dimensional image (X-axis: spatial position, Y-axis: time step, Z-axis fixed at 1).
         // SetSpacing(dx, dt, 1.0): Set the grid spacing to be dx in the X direction, dt in the Y direction, and 1.0 in the Z direction (without practical significance)
-        // auto img = vtkSmartPointer<vtkImageData>::New();  
-        // img->SetDimensions(nx, nt, 1);       // Dimension: number of spatial points x number of time steps x 1 (two-dimensional)
-        // img->SetOrigin(0.0, 0.0, 0.0);       // Origin of coordinate system
-        // img->SetSpacing(dx, dt, 1.0);        // Grid spacing: dx (space), dt (time), 1 (meaningless)
+        auto img = vtkSmartPointer<vtkImageData>::New();  
+        img->SetDimensions(nx, nt, 1);       // Dimension: number of spatial points x number of time steps x 1 (two-dimensional)
+        img->SetOrigin(0.0, 0.0, 0.0);       // Origin of coordinate system
+        img->SetSpacing(dx, dt, 1.0);        // Grid spacing: dx (space), dt (time), 1 (meaningless)
 
         // vtkDoubleArray: stores double precision floating-point data,
         // SetName("T"):  named "T" (such as temperature).
@@ -48,10 +48,11 @@ void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,
         // Column main sequence storage: The memory layout is (x0, t0) → (x1, t0) → .. → (x_{nx-1}, t0) → (x0, t1) → . ... complies with VTK rules.
         // Each grid point is associated with a scalar value (temperature), which is bound to vtkImageData through tScalars
         for (int j = 0; j < nt; ++j){                     // j: Time step index (Y-axis)
-            for (int i = 0; i < nx; ++i){                   // i: Spatial Position Index (X-axis)
+            for (int i = 0; i < nx; ++i){                 // i: Spatial Position Index (X-axis)
                 const double x = i * dx;
                 const double t = j * dt;
-                points->InsertNextPoint(x, t, 0.0);
+                const double z =  data[j][i] * zscale;    // 
+                points->InsertNextPoint(x, t, z);
                 scal->SetTuple1(j * nx + i, data[j][i]);   // Index=j * nx+i
             }
         }
@@ -82,19 +83,21 @@ void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,
         grid->SetCells(VTK_QUAD, cells);
         grid->GetPointData()->SetScalars(scal);
 
-        // img->GetPointData()->SetScalars(scal);             // Attach scalar data to grid points
+        img->GetPointData()->SetScalars(scal);             // Attach scalar data to grid points
 
         // 2. Write .vti
         // vtkXMLImageDataWriter: outputs VTkImageData as an XML formatted. vti file (VTK ImageData).
         // The process conforms to the VTK Writer standard steps: instantiation → setting file name → binding data → calling Write()
-        // 
-        // auto wr = vtkSmartPointer<vtkXMLImageDataWriter>::New();
-        // wr->SetFileName(vtk_name.c_str());   // Set output file name
-        // wr->SetInputData(img);               // Input VTK data object
-        // wr->Write();                         // Perform write operation
+        
+        auto wr = vtkSmartPointer<vtkXMLImageDataWriter>::New();
+        std::string filename = vtk_name + ".vti";
+        wr->SetFileName(filename.c_str());   // Set output file name
+        wr->SetInputData(img);               // Input VTK data object
+        wr->Write();                         // Perform write operation
 
         auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-        writer->SetFileName(vtk_name.c_str());
+        filename = vtk_name + ".vtu";
+        writer->SetFileName(filename.c_str() );
         writer->SetInputData(grid);
         // writer->Write();
         try {

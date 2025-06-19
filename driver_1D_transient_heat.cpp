@@ -24,10 +24,10 @@ int main(int argc,char **args)
 
     // Meshing parameters
     int N = 10; 
-    int M = 210;
+    int M = 2000;
 
     // Time stepping parameters
-    double initial_time = 0.0, final_time = 1.0;
+    double initial_time = 0.0, final_time = 5.0;
     double dt = (final_time - initial_time) / M;
 
     // Space meshing parameters
@@ -39,8 +39,8 @@ int main(int argc,char **args)
     PetscReal r2 = dt / (rho * cp );
     
     // Stability check
-    if (r1 > 0.5){
-        PetscPrintf(PETSC_COMM_WORLD, "warning: r = %f > 0.5, computation may be unstable\n", r1);
+    if (r1 > 0.5 && rank == 0){
+        throw std::runtime_error("warning: r  > 0.5, computation may be unstable\n");
     }
 
     // Restart options
@@ -176,8 +176,8 @@ int main(int argc,char **args)
 
     vtk_tools *vtk_tls = new vtk_tools();
 
-    vtk_tls->write_vtk(temp_timesets, "SOL_TEMPERATURE.vtu", dx, dt);
-    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE.vtu", dx, dt);
+    vtk_tls->write_vtk(temp_timesets, "SOL_TEMPERATURE", dx, dt, 1.0);
+    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
 
 
     // // Set exact solution;

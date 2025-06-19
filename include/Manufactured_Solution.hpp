@@ -30,22 +30,26 @@ public:
 
     // heat supply per unit volume function: rho c (2t-3)(2-x)(3-x) - 2 kappa (t-2)(t-1)
     double f(double x, double t) const {
-        return rho * cp * (2*t - 3) * (2 - x) * (3 - x) - 2 * kappa * (t - 2) * (t - 1);
+        // return rho * cp * (2*t - 3) * (2 - x) * (3 - x) - 2 * kappa * (t - 2) * (t - 1);
+        return 0.1 * (rho * cp * cos(t) * (2 - x) * (3 - x) - 2 * kappa * sin(t));
     }
 
     // Dirichlet B.C. (t-2)(t-1)(2-x)(3-x) 
     double g(double x, double t) const {
-        return (t - 2) * (t - 1) * (2 - x) * (3 - x);
+        // return (t - 2) * (t - 1) * (2 - x) * (3 - x);
+        return 0.1 * sin(t) * (2 - x) * (3 - x);
     }
 
     // Neumann B.C. kappa n_x (t-2)(t-1)(2x-5)
     double h(double x, double t, double nx) const {
-        return kappa * nx * (t - 2) * (t - 1) * (2*x - 5);
+        // return kappa * nx * (t - 2) * (t - 1) * (2*x - 5);
+        return 0.1 * kappa * nx * sin(t) * (2*x - 5);
     }
 
     // temperature field. (t-2)(t-1)(2-x)(3-x) 
     double u(double x, double t) const {
-        return (t - 2) * (t - 1) * (2 - x) * (3 - x);
+        // return (t - 2) * (t - 1) * (2 - x) * (3 - x);
+        return 0.1 * sin(t) * (2 - x) * (3 - x);
     }
 
     // get exact solution for temperature field
