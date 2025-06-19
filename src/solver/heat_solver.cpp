@@ -119,16 +119,16 @@ void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_t
         VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
         VecView(F, PETSC_VIEWER_STDOUT_WORLD);
 
-        std::vector<double> step_data = vec2arry->get_vector_array(temp);
+        std::vector<double> step_temp = vec2arry->get_vector_array(temp);
         if (rank == 0){
             std::cout << "step_data: time_step = " << j << "\n";
             for (int ii = 0; ii < mn_sol->N; ++ii){
-                std::cout << step_data[ii] << "\t";
+                std::cout << step_temp[ii] << "\t";
             }
             std::cout << std::endl;
         }
 
-        h5_tls->write_hdf5(j, step_data, j * mn_sol->dt);
+        h5_tls->write_hdf5(j, 0, step_temp);
 
     }
 

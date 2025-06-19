@@ -134,19 +134,33 @@ int main(int argc,char **args)
 
     hsolver->initialize(temp, F);
 
-    std::vector<double> init_data = vec2arry->get_vector_array(temp);
+    std::vector<double> init_temp = vec2arry->get_vector_array(temp);
     if (rank == 0){
-        std::cout << "init_data: \n";
+        std::cout << "init_temp: \n";
         for (int ii = 0; ii < N; ++ii){
-            std::cout << init_data[ii] << "\t";
+            std::cout << init_temp[ii] << "\t";
         }
         std::cout << std::endl;
     }
 
     h5_tls->setup_hdf5();
-    h5_tls->write_hdf5(0, init_data, 0.0);
+    h5_tls->write_hdf5(0, 0, init_temp);
 
     hsolver->time_loop(temp, F, A, h5_tls, vec2arry);
+
+    std::vector<std::vector<double>> temp_timesets;
+    h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timesets);
+    if (rank == 0){
+        std::cout << "temp_timesets: \n";
+        for (int tt = 0; tt <= 2; tt++){
+            std::cout << "time t " << tt << ": \t";
+            for (int ii = 0; ii < N; ++ii){
+                std::cout << temp_timesets[tt][ii] << "\t";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
 
     // // Set exact solution;
     // PetscScalar *u_array;
