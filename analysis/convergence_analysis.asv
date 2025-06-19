@@ -1,0 +1,62 @@
+clear all; clc; close all;
+
+figure;
+h = [1/10,1/20, 1/30, 1/40, 1/50,1/60, 1/70];
+log_h = log(h);
+
+
+
+% =========================================================================
+error = [2.224928437705465e-08, 6.368294799133563e-09,3.501335844328912e-09, 2.503289494009767e-09,... 
+         2.042279879377198e-09, 1.792104802785557e-09, 1.641342091569537e-09];
+log_error = log(L2_error);
+
+% =========================================================================
+
+
+
+h1 = plot(log_h, log_error,'b-', 'LineWidth', 2);
+xlabel("log-h");
+ylabel("log-error");
+legend('error','Location', 'Best', 'FontSize', 14, 'Box', 'on');
+
+% rate of error
+rate_error = zeros(length(log_h)-1,1);
+for ii = 1:length(log_h)-1
+    L2_rate_error(ii) = (log_L2_error(ii+1) - log_L2_error(ii))/(log_h(ii+1)-log_h(ii));
+    H1_rate_error(ii) = (log_H1_error(ii+1) - log_H1_error(ii))/(log_h(ii+1)-log_h(ii));
+end
+
+% add slope text
+for seg = 1:length(log_h)-1
+    x_mid = mean(log_h(seg:seg+1));
+    y_mid_L2 = mean(log_L2_error(seg:seg+1)) + 0.2;
+    y_mid_H1 = mean(log_H1_error(seg:seg+1)) + 0.2;
+    text(x_mid, y_mid_L2, sprintf('Slope: %.4f',L2_rate_error(seg)),...
+        'Color', 'b',...
+        'HorizontalAlignment', 'center',...
+        'VerticalAlignment', 'bottom',...
+        'FontSize', 12);
+    text(x_mid, y_mid_H1, sprintf('Slope: %.4f',H1_rate_error(seg)),...
+        'Color', 'r',...
+        'HorizontalAlignment', 'center',...
+        'VerticalAlignment', 'bottom',...
+        'FontSize', 12);
+end
+legend('show'); 
+hold off;
+
+fprintf('\n                           Convergence\n');
+fprintf('-------------------------------------------------------------------------------\n');
+fprintf('\tgrid\teL2\t\teH1\t\tlog(eL1)\tlog(eH1)\n');
+
+for i = 1:length(log_h)
+    eL2 = L2_error(i);
+    eH1 = H1_error(i);
+    logeL2 = log_L2_error(i);  
+    logeH1 = log_H1_error(i);
+    
+    % print
+    line = sprintf('\t%d\t%.8f\t%.8f\t%.8f\t%.8f\n', i, eL2, eH1, logeL2, logeH1);
+    fprintf('%s\n', line);
+end

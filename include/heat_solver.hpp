@@ -19,7 +19,7 @@ public:
     ~heat_solver();
 
     // initialization
-    void initialize(Vec &temp, Vec &F);
+    void initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
 
     // update temperature
     void update_temperature_expliciteuler(Vec &temp, Vec &F, Mat &A);

@@ -25,6 +25,7 @@ void hdf5_tools::setup_hdf5(){
             std::cerr << "Error closing HDF5 file: " << filename << std::endl;
         }
     }
+    MPI_Barrier(PETSC_COMM_WORLD); 
 
     
 }
@@ -141,4 +142,5 @@ void hdf5_tools::read_h5(const std::string& h5file_name, std::vector<std::vector
         }
         H5Fclose(fid);
     }
+    MPI_Barrier(PETSC_COMM_WORLD); 
 }

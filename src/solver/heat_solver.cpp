@@ -8,7 +8,7 @@ heat_solver::heat_solver(Manufactured_Solution *mn_sol_in)
     : mn_sol(mn_sol_in) {}
 
 
-void heat_solver::initialize(Vec &temp, Vec &F) {
+void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry) {
     PetscInt rstart, rend;
     PetscMPIInt    rank,size;
     VecGetOwnershipRange(temp, &rstart, &rend);
@@ -52,6 +52,17 @@ void heat_solver::initialize(Vec &temp, Vec &F) {
 
     VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
     VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+
+    std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
+    if (rank == 0){
+        std::cout << "init_temp: time_step = 0 \n";
+        for (int ii = 0; ii < mn_sol->N; ++ii){
+            std::cout << init_temp[ii] << "\t";
+        }
+        std::cout << std::endl;
+
+        h5_tls->write_hdf5(0, 0, init_temp);
+    }
 
 }
 
@@ -121,14 +132,15 @@ void heat_solver::time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_t
 
         std::vector<double> step_temp = vec2arry->get_vector_array(temp);
         if (rank == 0){
-            std::cout << "step_data: time_step = " << j << "\n";
+            std::cout << "step_temp: time_step = " << j << "\n";
             for (int ii = 0; ii < mn_sol->N; ++ii){
                 std::cout << step_temp[ii] << "\t";
             }
             std::cout << std::endl;
-        }
 
-        h5_tls->write_hdf5(j, 0, step_temp);
+            h5_tls->write_hdf5(j, 0, step_temp);
+            
+        }
 
     }
 

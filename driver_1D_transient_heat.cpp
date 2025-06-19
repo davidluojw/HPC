@@ -7,6 +7,7 @@ static char help[] = "Solves a 1D transient heat problem.\n\n";
 #include "hdf5_tools.hpp"
 #include "vtk_tools.hpp"
 #include "Vec2Array.hpp"
+#include <fstream>
 
 int main(int argc,char **args)
 {
@@ -23,8 +24,8 @@ int main(int argc,char **args)
     double rho = 1.0, cp = 1.0, kappa = 1.0, L = 1.0; 
 
     // Meshing parameters
-    int N = 10; 
-    int M = 2000;
+    int N = 4; 
+    int M = 100000;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 5.0;
@@ -133,30 +134,20 @@ int main(int argc,char **args)
 
     Vec2Array *vec2arry = new Vec2Array(); 
 
-    hsolver->initialize(temp, F); // initialize the temperature vector and source vector
+    h5_tls->setup_hdf5();
 
-    std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
-    if (rank == 0){
-        std::cout << "init_temp: \n";
-        for (int ii = 0; ii < N; ++ii){
-            std::cout << init_temp[ii] << "\t";
-        }
-        std::cout << std::endl;
-    }
-
-    h5_tls->setup_hdf5();                    // create a h5 file
-    h5_tls->write_hdf5(0, 0, init_temp);     // write the array into the h5 file
+    hsolver->initialize(temp, F, h5_tls, vec2arry); // initialize the temperature vector and source 
 
     hsolver->time_loop(temp, F, A, h5_tls, vec2arry);   // loop over the time step, meanwhile write the h5 file for each time step
 
-    std::vector<std::vector<double>> temp_timesets;     // store the temperature arrays for all time steps
-    h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timesets);   // read the h5 file that stores the temperature arrays
+    std::vector<std::vector<double>> temp_timeset;     // store the temperature arrays for all time steps
+    h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timeset);   // read the h5 file that stores the temperature arrays
     if (rank == 0){
-        std::cout << "temp_timesets: \n";
+        std::cout << "temp_timeset: \n";
         for (int tt = 0; tt <= 2; tt++){
             std::cout << "time t " << tt << ": \t";
             for (int ii = 0; ii < N; ++ii){
-                std::cout << temp_timesets[tt][ii] << "\t";
+                std::cout << temp_timeset[tt][ii] << "\t";
             }
             std::cout << std::endl;
         }
@@ -174,10 +165,36 @@ int main(int argc,char **args)
         }
     }
 
+    std::vector<double> temp_err(M+1); 
+    if (rank == 0){
+        double max_err = 0.0;
+        for (int t = 0; t <= M; t++){
+            for (int i = 1; i <= N; i++){
+                double err = std::abs(temp_timeset[t][i-1] - exact_temp_timeset[t][i]);
+                if (err > max_err) max_err = err;
+            }
+            temp_err[t] = max_err;
+            max_err = 0.0;
+        }
+        std::cout << "errors:\n";
+        for (int tt = 0; tt <= M; tt++){
+            std::cout << "time t " << tt << ": " << temp_err[tt] << "\t";
+            if (tt % 5 == 4) std::cout << std::endl;
+        }
+         std::cout << std::endl;
+
+         // write the errors into binary file
+         std::ofstream file("SOL_ERROR", std::ios::binary);
+        if (!file.write(reinterpret_cast<const char*>(temp_err.data()), temp_err.size() * sizeof(double))){
+            throw std::runtime_error("fail writing");
+        }
+        file.close();
+    }
+
     vtk_tools *vtk_tls = new vtk_tools();
 
-    vtk_tls->write_vtk(temp_timesets, "SOL_TEMPERATURE", dx, dt, 1.0);
-    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
+    vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
+    // vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
 
 
     // // Set exact solution;
