@@ -50,16 +50,16 @@ void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec
     VecAssemblyBegin(F);
     VecAssemblyEnd(F);
 
-    VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
-    VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+    // VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
+    // VecView(F, PETSC_VIEWER_STDOUT_WORLD);
 
     std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
     if (rank == 0){
-        std::cout << "init_temp: time_step = 0 \n";
-        for (int ii = 0; ii < mn_sol->N; ++ii){
-            std::cout << init_temp[ii] << "\t";
-        }
-        std::cout << std::endl;
+        // std::cout << "init_temp: time_step = 0 \n";
+        // for (int ii = 0; ii < mn_sol->N; ++ii){
+        //     std::cout << init_temp[ii] << "\t";
+        // }
+        // std::cout << std::endl;
 
         h5_tls->write_hdf5(0, 0, init_temp);
     }
@@ -132,11 +132,11 @@ void heat_solver::time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
 
         std::vector<double> step_temp = vec2arry->get_vector_array(temp);
         if (rank == 0){
-            std::cout << "step_temp: time_step = " << j << "\n";
-            for (int ii = 0; ii < mn_sol->N; ++ii){
-                std::cout << step_temp[ii] << "\t";
-            }
-            std::cout << std::endl;
+            // std::cout << "step_temp: time_step = " << j << "\n";
+            // for (int ii = 0; ii < mn_sol->N; ++ii){
+            //     std::cout << step_temp[ii] << "\t";
+            // }
+            // std::cout << std::endl;
 
             h5_tls->write_hdf5(j, 0, step_temp);
 
@@ -266,11 +266,11 @@ void heat_solver::time_loop_impliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
 
         std::vector<double> step_temp = vec2arry->get_vector_array(temp);
         if (rank == 0){
-            std::cout << "step_temp: time_step = " << j << "\n";
-            for (int ii = 0; ii < mn_sol->N; ++ii){
-                std::cout << step_temp[ii] << "\t";
-            }
-            std::cout << std::endl;
+            // std::cout << "step_temp: time_step = " << j << "\n";
+            // for (int ii = 0; ii < mn_sol->N; ++ii){
+            //     std::cout << step_temp[ii] << "\t";
+            // }
+            // std::cout << std::endl;
 
             h5_tls->write_hdf5(j, 0, step_temp);
 
@@ -306,6 +306,7 @@ void heat_solver::implicitEuler(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, 
     // // The linear system is distributed across the processors by
     // // chunks of contiguous rows, which correspond to contiguous
     // // sections of the mesh on which the problem is discretized.
+    double start_time = MPI_Wtime();
     if (rstart == 0) 
     {
         rstart = 1;
@@ -331,14 +332,19 @@ void heat_solver::implicitEuler(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, 
     // Assemble the matrix
     MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);
+    double end_time = MPI_Wtime();
+    PetscPrintf(PETSC_COMM_WORLD, "Matrix assembly time: %.16f seconds\n", end_time - start_time);
 
-    MatView(A,PETSC_VIEWER_STDOUT_WORLD);
+    // MatView(A,PETSC_VIEWER_STDOUT_WORLD);
 
     initialize(temp, F, h5_tls, vec2arry); // initialize the temperature vector and source 
 
-    update_sourcevec(F, 1); // evaluate F at t = dt
+    // update_sourcevec(F, 1); // evaluate F at t = dt
 
+    start_time = MPI_Wtime();
     time_loop_impliciteuler(temp, F, A, h5_tls, vec2arry);   // loop over the time step, meanwhile write the h5 file for each time step
+    end_time = MPI_Wtime();
+    PetscPrintf(PETSC_COMM_WORLD, "Sovler time: %.16f seconds\n", end_time - start_time);
 
-     MatDestroy(&A);
+    MatDestroy(&A);
 }

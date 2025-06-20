@@ -39,11 +39,11 @@ std::vector<double> Vec2Array::get_vector_array(Vec temp){
     //                the first element of the continuous storage area inside the vector,  = &counts[0]
     MPI_Gather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT, 0, PETSC_COMM_WORLD);
     if (rank == 0){
-        std::cout << "counts: \n";
-        for (int ii = 0; ii < size; ++ii){
-            std::cout << counts[ii] << "\t";
-        }
-        std::cout << std::endl;
+        // std::cout << "counts: \n";
+        // for (int ii = 0; ii < size; ++ii){
+        //     std::cout << counts[ii] << "\t";
+        // }
+        // std::cout << std::endl;
     }
 
     // calculate the displacement

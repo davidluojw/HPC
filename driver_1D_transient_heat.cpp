@@ -14,6 +14,9 @@ int main(int argc,char **args)
     // PETSc Initialization
     PetscInitialize(&argc,&args,(char*)0,help);
 
+    double start_time = MPI_Wtime();
+    
+
     MPI_Comm        comm;
     PetscMPIInt     rank;
 
@@ -24,8 +27,8 @@ int main(int argc,char **args)
     double rho = 1.0, cp = 1.0, kappa = 1.0, L = 1.0; 
 
     // Meshing parameters
-    int N = 60; 
-    int M = 100000;
+    int N = 1000; 
+    int M = 100;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 5.0;
@@ -76,11 +79,11 @@ int main(int argc,char **args)
         x_coor[ii] = ii * dx;
     }
     if (rank == 0){
-        std::cout << "x_coor: \n";
-        for (int ii = 0; ii < N+1; ++ii){
-            std::cout << x_coor[ii] << "\t";
-        }
-        std::cout << std::endl;
+        // std::cout << "x_coor: \n";
+        // for (int ii = 0; ii < N+1; ++ii){
+        //     std::cout << x_coor[ii] << "\t";
+        // }
+        // std::cout << std::endl;
     }
     
     Manufactured_Solution * mn_sol = new Manufactured_Solution(rho, cp, kappa, r1, r2, 
@@ -100,26 +103,26 @@ int main(int argc,char **args)
     std::vector<std::vector<double>> temp_timeset;     // store the temperature arrays for all time steps
     h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timeset);   // read the h5 file that stores the temperature arrays
     if (rank == 0){
-        std::cout << "temp_timeset: \n";
-        for (int tt = 0; tt <= 2; tt++){
-            std::cout << "time t " << tt << ": \t";
-            for (int ii = 0; ii < N; ++ii){
-                std::cout << temp_timeset[tt][ii] << "\t";
-            }
-            std::cout << std::endl;
-        }
+        // std::cout << "temp_timeset: \n";
+        // for (int tt = 0; tt <= 2; tt++){
+        //     std::cout << "time t " << tt << ": \t";
+        //     for (int ii = 0; ii < N; ++ii){
+        //         std::cout << temp_timeset[tt][ii] << "\t";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 
     std::vector<std::vector<double>> exact_temp_timeset = mn_sol->get_exact_temp_timeset();  // obtain the exact temperature arrays for all time steps
     if (rank == 0){
-        std::cout << "exact_temp_timesets: \n";
-        for (int tt = 0; tt <= 2; tt++){
-            std::cout << "time t " << tt << ": \t";
-            for (int ii = 1; ii <= N; ++ii){
-                std::cout << exact_temp_timeset[tt][ii] << "\t";
-            }
-            std::cout << std::endl;
-        }
+        // std::cout << "exact_temp_timesets: \n";
+        // for (int tt = 0; tt <= 2; tt++){
+        //     std::cout << "time t " << tt << ": \t";
+        //     for (int ii = 1; ii <= N; ++ii){
+        //         std::cout << exact_temp_timeset[tt][ii] << "\t";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 
     std::vector<double> temp_err(M+1); 
@@ -133,12 +136,12 @@ int main(int argc,char **args)
             temp_err[t] = max_err;
             max_err = 0.0;
         }
-        std::cout << "errors:\n";
-        for (int tt = 0; tt <= M; tt++){
-            std::cout << "time t " << tt << ": " << temp_err[tt] << "\t";
-            if (tt % 5 == 4) std::cout << std::endl;
-        }
-         std::cout << std::endl;
+        // std::cout << "errors:\n";
+        // for (int tt = 0; tt <= M; tt++){
+        //     std::cout << "time t " << tt << ": " << temp_err[tt] << "\t";
+        //     if (tt % 5 == 4) std::cout << std::endl;
+        // }
+        //  std::cout << std::endl;
 
          // write the errors into binary file
          std::ofstream file("SOL_ERROR", std::ios::binary);
@@ -150,7 +153,7 @@ int main(int argc,char **args)
 
     vtk_tools *vtk_tls = new vtk_tools();
 
-    vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
+    // vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
     // vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
 
 
@@ -158,6 +161,9 @@ int main(int argc,char **args)
     // are no longer needed.
     VecDestroy(&temp); VecDestroy(&temp_x);
     VecDestroy(&F);
+
+    double end_time = MPI_Wtime();
+    PetscPrintf(PETSC_COMM_WORLD, "Total time: %.16f seconds\n", end_time - start_time);
 
 
     // Always call PetscFinalize() before exiting a program.  This routine
