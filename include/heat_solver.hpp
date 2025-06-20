@@ -28,7 +28,19 @@ public:
     void update_sourcevec(Vec &F, int j);
 
     // loop time step
-    void time_loop(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
+    void time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
+
+    // explicit euler solver
+    void explicitEuler(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
+
+    // update temperature
+    void update_temperature_impliciteuler(Vec &temp, Vec &F, Mat &A);
+
+    // loop time step
+    void time_loop_impliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
+
+    // implicit euler solver
+    void implicitEuler(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry);
 
 
 };

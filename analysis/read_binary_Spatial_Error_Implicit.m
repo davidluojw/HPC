@@ -17,6 +17,18 @@ grid on;
 
 
 figure;
+fid = fopen('SOL_ERROR_3_N1', 'rb');
+datan1 = fread(fid, [M+1, 1], 'double');  % 按列读取为向量
+fclose(fid);
+errorn1= datan1(M+1);
+loglog(t, datan1,  'LineWidth', 2, "DisplayName", "SOL\_ERROR\_N1");
+
+xlabel("time step");
+ylabel("error e_t");
+grid on;
+legend("show");
+
+figure;
 fid = fopen('SOL_ERROR_3_0', 'rb');
 data0 = fread(fid, [M+1, 1], 'double');  % 按列读取为向量
 fclose(fid);
@@ -134,6 +146,7 @@ legend("show");
 
 figure;
 hold on;
+loglog(t, datan1,  'LineWidth', 2, "DisplayName", "SOL\_ERROR\_N1");
 loglog(t, data0,  'LineWidth', 2, "DisplayName", "SOL\_ERROR\_0");
 loglog(t, data1,  'LineWidth', 2, "DisplayName", "SOL\_ERROR\_1");
 loglog(t, data2,  'LineWidth', 2, "DisplayName", "SOL\_ERROR\_2");
