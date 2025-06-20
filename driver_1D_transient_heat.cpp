@@ -24,8 +24,8 @@ int main(int argc,char **args)
     double rho = 1.0, cp = 1.0, kappa = 1.0, L = 1.0; 
 
     // Meshing parameters
-    int N = 200; 
-    int M = 100;
+    int N = 60; 
+    int M = 100000;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 5.0;
