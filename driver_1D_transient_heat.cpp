@@ -27,11 +27,11 @@ int main(int argc,char **args)
     double rho = 1.0, cp = 1.0, kappa = 1.0, L = 1.0; 
 
     // Meshing parameters
-    int N = 1000; 
-    int M = 100;
+    int N = 50; 
+    int M = 500000;
 
     // Time stepping parameters
-    double initial_time = 0.0, final_time = 5.0;
+    double initial_time = 0.0, final_time = 1.0;
     double dt = (final_time - initial_time) / M;
 
     // Space meshing parameters
@@ -136,12 +136,12 @@ int main(int argc,char **args)
             temp_err[t] = max_err;
             max_err = 0.0;
         }
-        // std::cout << "errors:\n";
-        // for (int tt = 0; tt <= M; tt++){
-        //     std::cout << "time t " << tt << ": " << temp_err[tt] << "\t";
-        //     if (tt % 5 == 4) std::cout << std::endl;
-        // }
-        //  std::cout << std::endl;
+        std::cout << "errors:\n";
+        for (int tt = 0; tt <= M; tt++){
+            std::cout << "time t " << tt << ": " << temp_err[tt] << "\t";
+            if (tt % 5 == 4) std::cout << std::endl;
+        }
+         std::cout << std::endl;
 
          // write the errors into binary file
          std::ofstream file("SOL_ERROR", std::ios::binary);
@@ -153,8 +153,8 @@ int main(int argc,char **args)
 
     vtk_tools *vtk_tls = new vtk_tools();
 
-    // vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
-    // vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
+    vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
+    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
 
 
     // Free work space.  All PETSc objects should be destroyed when they

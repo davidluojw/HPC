@@ -35,7 +35,7 @@ void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec
             f_val += mn_sol->r1 * mn_sol->g(mn_sol->x_coor[0], t0);
             // PetscPrintf(PETSC_COMM_SELF,"from rank %d , i = %d, f_val = %f\n",rank, i, f_val);
         }
-        else if (i == mn_sol->N - 1){
+        if (i == mn_sol->N - 1){
             f_val += mn_sol->r1 * 2 * mn_sol->dx / mn_sol->kappa * mn_sol->h(mn_sol->x_coor[mn_sol->N], t0, 1);
             // PetscPrintf(PETSC_COMM_SELF,"from rank %d, i = %d, f_val = %f \n",rank, i, f_val);
         }
@@ -102,7 +102,7 @@ void heat_solver::update_sourcevec(Vec &F, int j){
             f_val += mn_sol->r1 * mn_sol->g(mn_sol->x_coor[0], tt);
             // PetscPrintf(PETSC_COMM_SELF,"from rank %d , i = %d, f_val = %f\n",rank, i, f_val);
         }
-        else if (i == mn_sol->N - 1){
+        if (i == mn_sol->N - 1){
             f_val += mn_sol->r1 * 2 * mn_sol->dx / mn_sol->kappa * mn_sol->h(mn_sol->x_coor[mn_sol->N], tt, 1);
             // PetscPrintf(PETSC_COMM_SELF,"from rank %d, i = %d, f_val = %f \n",rank, i, f_val);
         }
@@ -233,7 +233,7 @@ void heat_solver::update_temperature_impliciteuler(Vec &temp, Vec &F, Mat &A){
     //   KSPSetFromOptions();
     KSPGetPC(ksp, &pc);
     PCSetType(pc, PCJACOBI);
-    KSPSetTolerances(ksp, 1.e-7, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+    KSPSetTolerances(ksp, 1.e-15, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
 
     // Set runtime options, e.g.,
     //     -ksp_type <type> -pc_type <type> -ksp_monitor -ksp_rtol <rtol>
