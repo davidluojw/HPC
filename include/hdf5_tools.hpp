@@ -17,7 +17,7 @@ public:
     hdf5_tools(const std::string& filename);
 
     // destructor
-    ~hdf5_tools(){}; 
+    ~hdf5_tools(); 
 
     // set up hdf5
     void setup_hdf5();

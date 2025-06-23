@@ -7,6 +7,8 @@
 heat_solver::heat_solver(Manufactured_Solution *mn_sol_in)
     : mn_sol(mn_sol_in) {}
 
+heat_solver::~heat_solver() {}
+
 
 void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec2Array * const & vec2arry) {
     PetscInt rstart, rend;
@@ -77,7 +79,7 @@ void heat_solver::update_temperature_expliciteuler(Vec &temp, Vec &F, Mat &A){
     VecAXPY(temp_np1, 1.0, F);
 
     // Update temp
-    VecSwap(temp, temp_np1);
+    VecCopy(temp, temp_np1);
 
     // release
     VecDestroy(&temp_np1);

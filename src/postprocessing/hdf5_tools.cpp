@@ -8,6 +8,8 @@
 
 hdf5_tools::hdf5_tools(const std::string& filename_in): filename(filename_in){}
 
+hdf5_tools::~hdf5_tools() {}
+
 
 void hdf5_tools::setup_hdf5(){
     PetscMPIInt rank;

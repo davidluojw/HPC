@@ -28,7 +28,7 @@ int main(int argc,char **args)
 
     // Meshing parameters
     int N = 50; 
-    int M = 500000;
+    int M = 50;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 1.0;
@@ -153,8 +153,8 @@ int main(int argc,char **args)
 
     vtk_tools *vtk_tls = new vtk_tools();
 
-    vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
-    vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
+    // vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
+    // vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
 
 
     // Free work space.  All PETSc objects should be destroyed when they
@@ -162,9 +162,15 @@ int main(int argc,char **args)
     VecDestroy(&temp); VecDestroy(&temp_x);
     VecDestroy(&F);
 
+    // Free heap-allocated objects
+    delete mn_sol;
+    delete hsolver;
+    delete h5_tls;
+    delete vec2arry;
+    delete vtk_tls;
+
     double end_time = MPI_Wtime();
     PetscPrintf(PETSC_COMM_WORLD, "Total time: %.16f seconds\n", end_time - start_time);
-
 
     // Always call PetscFinalize() before exiting a program.  This routine
     //   - finalizes the PETSc libraries as well as MPI

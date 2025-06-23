@@ -28,7 +28,7 @@ public:
           N(N_val), M(M_val), x_coor(x_coor_in) {}
     
     // destructor
-    ~Manufactured_Solution();
+    ~Manufactured_Solution(){};
 
     // heat supply per unit volume function: rho c (2t-3)(2-x)(3-x) - 2 kappa (t-2)(t-1)
     double f(double x, double t) const {

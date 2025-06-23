@@ -4,7 +4,9 @@
 #include <vector>
 #include "petsc.h"
 
-vtk_tools::vtk_tools(){};
+vtk_tools::vtk_tools(){}
+
+vtk_tools::~vtk_tools() {}
 
 
 void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,

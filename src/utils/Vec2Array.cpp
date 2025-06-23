@@ -3,6 +3,8 @@
 
 Vec2Array::Vec2Array(){}
 
+Vec2Array::~Vec2Array() {}
+
 std::vector<double> Vec2Array::get_vector_array(Vec temp){
     PetscInt rstart, rend, local_size, global_size;
     PetscMPIInt    rank,size;
