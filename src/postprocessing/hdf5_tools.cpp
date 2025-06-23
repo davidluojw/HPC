@@ -14,6 +14,7 @@ hdf5_tools::~hdf5_tools() {}
 void hdf5_tools::setup_hdf5(){
     PetscMPIInt rank;
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+
     // only write h5 file on main process
     if (rank == 0){
         hid_t file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -27,7 +28,6 @@ void hdf5_tools::setup_hdf5(){
             std::cerr << "Error closing HDF5 file: " << filename << std::endl;
         }
     }
-    MPI_Barrier(PETSC_COMM_WORLD); 
 
     
 }
@@ -41,22 +41,50 @@ void hdf5_tools::write_hdf5( const int &time_index, const int &dataset_name,  st
     if (rank == 0){
         hid_t file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
         if(file_id < 0) {
-            // 文件不存在，创建它
-            file_id = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
-            if(file_id < 0) {
-                std::cerr << "Error creating HDF5 file: " << filename << std::endl;
-                return;
-            }
+            // File does not exist, create it
+            // file_id = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+            // if(file_id < 0) {
+                // std::cerr << "Error creating HDF5 file: " << filename << std::endl;
+                // return;
+            // }
+            std::cerr << "Error opening HDF5 file for writing: " << filename << std::endl;
+            return;
         }
 
         const std::string group_name = std::to_string(900000000 + time_index);
 
-        hid_t group_id = H5Gcreate(file_id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        if(group_id < 0) {
-            std::cerr << "Error creating group: " << group_name << std::endl;
-            H5Fclose(file_id);
-            return;
+        // std::cout << "Writing group: " << group_name << std::endl;
+
+        // 1. Define the original error handling function pointer and client data
+        H5E_auto2_t old_func;
+        void *old_client_data;
+        // 2. Turn off error output before attempting to open the group
+        H5Eget_auto(H5E_DEFAULT, &old_func, &old_client_data);
+        H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+
+        // 3. Attempt to open the group (error will not print at this time)
+        hid_t group_id = H5Gopen(file_id, group_name.c_str(), H5P_DEFAULT);
+
+        // 4. Immediately restore error handling settings
+        H5Eset_auto(H5E_DEFAULT, old_func, old_client_data);
+
+        // 5. Check if the group exists and create it
+        if (group_id < 0) {
+            // Group does not exist, create it
+            group_id = H5Gcreate(file_id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if(group_id < 0) {
+                std::cerr << "Error creating group: " << group_name << std::endl;
+                H5Fclose(file_id);
+                return;
+            }
         }
+
+        // hid_t group_id = H5Gcreate(file_id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        // if(group_id < 0) {
+        //     std::cerr << "Error creating group: " << group_name << std::endl;
+        //     H5Fclose(file_id);
+        //     return;
+        // }
 
         // Now write the data into the h5 file
         hsize_t dims[1] = { static_cast<hsize_t>(data.size()) };
@@ -78,6 +106,7 @@ void hdf5_tools::write_hdf5( const int &time_index, const int &dataset_name,  st
                 H5Fclose(file_id);
                 return;
             }
+
 
             herr_t status = H5Dwrite( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0] );
             if(status < 0) {
@@ -116,6 +145,10 @@ void hdf5_tools::read_h5(const std::string& h5file_name, std::vector<std::vector
             groups.emplace_back(name);  // insert a new element constructed with name as a parameter at the end of the groups container
         }
 
+        // for (size_t i = 0; i < groups.size(); ++i) {
+        //     std::cout << "Found group: " << groups[i] << std::endl;
+        // }
+
         // 2. Data size
         hid_t g0 = H5Gopen(fid, groups[0].c_str(), H5P_DEFAULT);  // Open the first time step group
         hid_t d0 = H5Dopen(g0, "0", H5P_DEFAULT);                 // Open dataset '0', temperature field
@@ -144,5 +177,4 @@ void hdf5_tools::read_h5(const std::string& h5file_name, std::vector<std::vector
         }
         H5Fclose(fid);
     }
-    MPI_Barrier(PETSC_COMM_WORLD); 
 }

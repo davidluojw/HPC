@@ -28,7 +28,7 @@ int main(int argc,char **args)
 
     // Meshing parameters
     int N = 50; 
-    int M = 50;
+    int M = 1;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 1.0;
@@ -78,13 +78,6 @@ int main(int argc,char **args)
     for (int ii = 0; ii < N+1; ii++){
         x_coor[ii] = ii * dx;
     }
-    if (rank == 0){
-        // std::cout << "x_coor: \n";
-        // for (int ii = 0; ii < N+1; ++ii){
-        //     std::cout << x_coor[ii] << "\t";
-        // }
-        // std::cout << std::endl;
-    }
     
     Manufactured_Solution * mn_sol = new Manufactured_Solution(rho, cp, kappa, r1, r2, 
              initial_time, final_time, dt, bc_left, bc_right, dx, N, M, x_coor);
@@ -96,34 +89,16 @@ int main(int argc,char **args)
     Vec2Array *vec2arry = new Vec2Array(); 
 
     h5_tls->setup_hdf5();
+    MPI_Barrier(PETSC_COMM_WORLD);
 
     // hsolver->explicitEuler(temp, F, h5_tls, vec2arry);
     hsolver->implicitEuler(temp, F, h5_tls, vec2arry);
 
     std::vector<std::vector<double>> temp_timeset;     // store the temperature arrays for all time steps
     h5_tls->read_h5("SOL_TEMPERATURE.h5", temp_timeset);   // read the h5 file that stores the temperature arrays
-    if (rank == 0){
-        // std::cout << "temp_timeset: \n";
-        // for (int tt = 0; tt <= 2; tt++){
-        //     std::cout << "time t " << tt << ": \t";
-        //     for (int ii = 0; ii < N; ++ii){
-        //         std::cout << temp_timeset[tt][ii] << "\t";
-        //     }
-        //     std::cout << std::endl;
-        // }
-    }
+    MPI_Barrier(PETSC_COMM_WORLD);
 
     std::vector<std::vector<double>> exact_temp_timeset = mn_sol->get_exact_temp_timeset();  // obtain the exact temperature arrays for all time steps
-    if (rank == 0){
-        // std::cout << "exact_temp_timesets: \n";
-        // for (int tt = 0; tt <= 2; tt++){
-        //     std::cout << "time t " << tt << ": \t";
-        //     for (int ii = 1; ii <= N; ++ii){
-        //         std::cout << exact_temp_timeset[tt][ii] << "\t";
-        //     }
-        //     std::cout << std::endl;
-        // }
-    }
 
     std::vector<double> temp_err(M+1); 
     if (rank == 0){
@@ -150,17 +125,13 @@ int main(int argc,char **args)
         }
         file.close();
     }
+    MPI_Barrier(PETSC_COMM_WORLD);
 
     vtk_tools *vtk_tls = new vtk_tools();
 
-    // vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
+    vtk_tls->write_vtk(temp_timeset, "SOL_TEMPERATURE", dx, dt, 1.0);
     // vtk_tls->write_vtk(exact_temp_timeset, "SOL_EXACT_TEMPERATURE", dx, dt, 1.0);
-
-
-    // Free work space.  All PETSc objects should be destroyed when they
-    // are no longer needed.
-    VecDestroy(&temp); VecDestroy(&temp_x);
-    VecDestroy(&F);
+    MPI_Barrier(PETSC_COMM_WORLD);
 
     // Free heap-allocated objects
     delete mn_sol;
@@ -168,6 +139,11 @@ int main(int argc,char **args)
     delete h5_tls;
     delete vec2arry;
     delete vtk_tls;
+
+    // Free work space.  All PETSc objects should be destroyed when they
+    // are no longer needed.
+    VecDestroy(&temp); VecDestroy(&temp_x);
+    VecDestroy(&F);
 
     double end_time = MPI_Wtime();
     PetscPrintf(PETSC_COMM_WORLD, "Total time: %.16f seconds\n", end_time - start_time);
@@ -177,7 +153,7 @@ int main(int argc,char **args)
     //   - provides summary and diagnostic information if certain runtime
     //     options are chosen (e.g., -log_view).
     PetscFinalize();
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // EOF

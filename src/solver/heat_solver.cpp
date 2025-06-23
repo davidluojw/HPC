@@ -65,6 +65,7 @@ void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec
 
         h5_tls->write_hdf5(0, 0, init_temp);
     }
+    MPI_Barrier(PETSC_COMM_WORLD);
 
 }
 
@@ -127,7 +128,8 @@ void heat_solver::time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
 
     for (int j = 1; j <= mn_sol->M; j++) {
         update_temperature_expliciteuler(temp, F, A);
-        update_sourcevec(F, j);
+        update_sourcevec(F, j);  // update the source vector F for the next time step
+
 
         // VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
         // VecView(F, PETSC_VIEWER_STDOUT_WORLD);
@@ -143,6 +145,7 @@ void heat_solver::time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
             h5_tls->write_hdf5(j, 0, step_temp);
 
         }
+        MPI_Barrier(PETSC_COMM_WORLD);
 
     }
 
@@ -260,8 +263,8 @@ void heat_solver::time_loop_impliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
 
 
     for (int j = 1; j <= mn_sol->M; j++) {
-        update_temperature_impliciteuler(temp, F, A);
         update_sourcevec(F, j+1);
+        update_temperature_impliciteuler(temp, F, A);
 
         // VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
         // VecView(F, PETSC_VIEWER_STDOUT_WORLD);
@@ -277,6 +280,7 @@ void heat_solver::time_loop_impliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
             h5_tls->write_hdf5(j, 0, step_temp);
 
         }
+        MPI_Barrier(PETSC_COMM_WORLD);
 
     }
 

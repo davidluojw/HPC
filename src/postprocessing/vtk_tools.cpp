@@ -110,5 +110,4 @@ void vtk_tools::write_vtk(const std::vector<std::vector<double>> &data,
 
         std::cout << "Done: " << vtk_name << "\n";
     }
-    MPI_Barrier(PETSC_COMM_WORLD); 
 }
