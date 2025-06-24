@@ -35,8 +35,8 @@ public:
         // return 0.1 * rho * cp * (2*t - 3) * (2 - x) * (3 - x) - 0.2 * kappa * (t - 2) * (t - 1);
         // return 0.1 * (rho * cp * cos(t) * (2 - x) * (3 - x) - 2 * kappa * sin(t));
         // return -rho * cp * pi * pi * sin(pi * x) * exp(-pi*pi*t) + kappa * pi * pi * sin(pi * x) * exp(-pi*pi*t);
-        // return -rho * cp * x * (1-x) * exp(-t) + 2 * kappa * exp(-t);
-        return -rho * cp * sin(pi * x) * exp(-t) + kappa * pi * pi * sin(pi * x) * exp(-t);
+        return -rho * cp * x * (1-x) * exp(-t) + 2 * kappa * exp(-t);
+        // return -rho * cp * sin(pi * x) * exp(-t) + kappa * pi * pi * sin(pi * x) * exp(-t);
     }
 
     // Dirichlet B.C. (t-2)(t-1)(2-x)(3-x) 
@@ -44,8 +44,8 @@ public:
         // return 0.1 * (t - 2) * (t - 1) * (2 - x) * (3 - x);
         // return 0.1 * sin(t) * (2 - x) * (3 - x);
         // return sin(pi * x) * exp(-pi*pi*t);
-        // return x*(1-x)* exp(-t);
-        return sin(pi * x) * exp(-t);
+        return x*(1-x)* exp(-t);
+        // return sin(pi * x) * exp(-t);
     }
 
     // Neumann B.C. kappa n_x (t-2)(t-1)(2x-5)
@@ -53,8 +53,8 @@ public:
         // return 0.1 * kappa * nx * (t - 2) * (t - 1) * (2*x - 5);
         // return 0.1 * kappa * nx * sin(t) * (2*x - 5);
         // return kappa * nx * pi * cos(pi * x) * exp(-pi*pi*t);
-        // return kappa * nx * (1-2*x)*exp(-t);
-        return kappa * nx * pi * cos(pi * x) * exp(-t);
+        return kappa * nx * (1-2*x)*exp(-t);
+        // return kappa * nx * pi * cos(pi * x) * exp(-t);
     }
 
     // temperature field. (t-2)(t-1)(2-x)(3-x) 
@@ -62,8 +62,8 @@ public:
         // return  0.1 * (t - 2) * (t - 1) * (2 - x) * (3 - x);
         // return 0.1 * sin(t) * (2 - x) * (3 - x);
         // return sin(pi * x) * exp(-pi*pi*t);
-        // return x*(1-x)* exp(-t);
-        return sin(pi * x) * exp(-t);
+        return x*(1-x)* exp(-t);
+        // return sin(pi * x) * exp(-t);
     }
 
     // get exact solution for temperature field

@@ -27,8 +27,8 @@ int main(int argc,char **args)
     double rho = 1.0, cp = 1.0, kappa = 1.0, L = 1; 
 
     // Meshing parameters
-    int N = 100; 
-    int M = 100000;
+    int N = 50; 
+    int M = 80000;
 
     // Time stepping parameters
     double initial_time = 0.0, final_time = 1.0;
@@ -54,9 +54,9 @@ int main(int argc,char **args)
     PetscPrintf(PETSC_COMM_WORLD, "r2: %.2f\n", r2);
     
     // Stability check
-    // if (r1 > 0.5 && rank == 0){
-    //     throw std::runtime_error("warning: r  > 0.5, computation may be unstable\n");
-    // }
+    if (r1 > 0.5 && rank == 0){
+        throw std::runtime_error("warning: r  > 0.5, computation may be unstable\n");
+    }
 
     // Restart options
     bool is_restart = false;
@@ -79,6 +79,10 @@ int main(int argc,char **args)
     VecSetFromOptions(temp);
     VecDuplicate(temp, &temp_x);
     VecDuplicate(temp, &F);
+
+    VecSet(F, 0.0);
+    VecSet(temp, 0.0);
+    VecSet(temp_x, 0.0);
 
     // // Identify the starting and ending mesh points on each
     // // processor for the interior part of the mesh.

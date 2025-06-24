@@ -61,6 +61,7 @@ void heat_solver::initialize(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, Vec
 void heat_solver::update_temperature_expliciteuler(Vec &temp, Vec &F, Mat &A){
     Vec temp_np1;
     VecDuplicate(temp, &temp_np1);
+    VecSet(temp_np1, 0.0);
 
     // temp_np1 = A*temp
     MatMult(A, temp, temp_np1);
@@ -120,22 +121,14 @@ void heat_solver::time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
     MPI_Comm_size(PETSC_COMM_WORLD,&size);
     MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
 
-    // update_temperature_expliciteuler(temp, F, A);
-
-    for (int j = 1; j <= mn_sol->M; j++) {
-        
-        update_sourcevec(F, j);  // update the source vector F for the next time step
-        update_temperature_expliciteuler(temp, F, A);
-
-        // VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
-        // VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+    for (int j = 0; j < mn_sol->M; j++) {
 
         double tt = j * mn_sol->dt;
 
         std::vector<double> step_temp = vec2arry->get_vector_array(temp);
         step_temp.insert(step_temp.begin(), mn_sol->u(mn_sol->x_coor[0], tt));
         if (rank == 0){
-            std::cout << "step_temp: "<< j << "\n";
+            // std::cout << "step_temp: "<< j << "\n";
             // for (int ii = 0; ii < step_temp.size(); ++ii){
             //     std::cout << step_temp[ii] << "\t";
             // }
@@ -144,6 +137,29 @@ void heat_solver::time_loop_expliciteuler(Vec &temp, Vec &F, Mat &A, hdf5_tools 
             h5_tls->write_hdf5(j, 0, step_temp);
 
         }
+
+        VecSet(F, 0.0);  // reset F to zero before each time step
+
+        update_sourcevec(F, j);  // update the source vector F for the next time step
+    
+        if (j == 0) 
+        {
+            PetscPrintf(PETSC_COMM_WORLD, "The first iteration F1: \n");
+            VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+        }
+
+        update_temperature_expliciteuler(temp, F, A);
+
+        if (j == 0) 
+        {
+            PetscPrintf(PETSC_COMM_WORLD, "Updated temperature vector: \n");
+            VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
+        }
+
+        // VecView(temp, PETSC_VIEWER_STDOUT_WORLD);
+        // VecView(F, PETSC_VIEWER_STDOUT_WORLD);
+
+        
     }
     MPI_Barrier(PETSC_COMM_WORLD);
 
@@ -219,20 +235,21 @@ void heat_solver::explicitEuler(Vec &temp, Vec &F, hdf5_tools * const & h5_tls, 
 
     initialize(temp, F, h5_tls, vec2arry); // initialize the temperature vector and source 
 
-    double t0 = mn_sol->initial_time;
+    // double t0 = mn_sol->initial_time;
 
-    std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
-    init_temp.insert(init_temp.begin(), mn_sol->u(mn_sol->x_coor[0], t0));
-    if (rank == 0){
-        std::cout << "init_temp: \n";
-        for (int ii = 0; ii < init_temp.size(); ++ii){
-            std::cout << init_temp[ii] << "\t";
-        }
-        std::cout << std::endl;
+    // std::vector<double> init_temp = vec2arry->get_vector_array(temp);  // get the array of Vec temp
+    // init_temp.insert(init_temp.begin(), mn_sol->u(mn_sol->x_coor[0], t0));
+    // if (rank == 0){
+    //     std::cout << "init_temp: \n";
+    //     for (int ii = 0; ii < init_temp.size(); ++ii){
+    //         std::cout << init_temp[ii] << "\t";
+    //     }
+    //     std::cout << std::endl;
 
-        h5_tls->write_hdf5(0, 0, init_temp);
-    }
-    MPI_Barrier(PETSC_COMM_WORLD);
+    //     h5_tls->write_hdf5(0, 0, init_temp);
+    // }
+    // MPI_Barrier(PETSC_COMM_WORLD);
+    VecView(temp,PETSC_VIEWER_STDOUT_WORLD);
 
     start_time = MPI_Wtime();
     time_loop_expliciteuler(temp, F, A, h5_tls, vec2arry);   // loop over the time step, meanwhile write the h5 file for each time step
