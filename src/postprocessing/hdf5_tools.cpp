@@ -97,7 +97,7 @@ void hdf5_tools::write_hdf5( const int &time_index, const int &dataset_name,  st
                 H5Fclose(file_id);
                 return;
             }
-            hid_t dataset   = H5Dcreate( group_id, std::to_string(dataset_name).c_str(), H5T_NATIVE_DOUBLE, 
+            hid_t dataset   = H5Dcreate( group_id, std::to_string(dataset_name).c_str(), H5T_IEEE_F64LE, 
                                          dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
             if(dataset < 0) {
                 std::cerr << "Error creating dataset" << std::endl;
